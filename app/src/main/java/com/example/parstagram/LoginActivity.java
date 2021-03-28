@@ -60,12 +60,12 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
                 // TODO: navigate to the main activity if the user has signed in properly
-                goMainACtivity();
+                goMainActivity();
                 Toast.makeText(LoginActivity.this, "success", Toast.LENGTH_SHORT);
             }
         });
     }
-    private void goMainACtivity() {
+    private void goMainActivity() {
         Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
     }
