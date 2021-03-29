@@ -42,8 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private String photoFileName = "photo.jpg";
     private Button btnLogout;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -147,12 +145,10 @@ public class MainActivity extends AppCompatActivity {
         // Use `getExternalFilesDir` on Context to access package-specific directories.
         // This way, we don't need to request external read/write runtime permissions.
         File mediaStorageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), TAG);
-
         // Create the storage directory if it does not exist
         if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()){
             Log.d(TAG, "failed to create directory");
         }
-
         // Return the file target for the photo based on filename
         File file = new File(mediaStorageDir.getPath() + File.separator + photoFileName);
 
@@ -176,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
                 ivPostImage.setImageResource(0);
             }
         });
-
     }
 
     private void queryPost(){
