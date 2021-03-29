@@ -1,9 +1,12 @@
 package com.example.parstagram;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.parse.FindCallback;
+import com.parse.LogInCallback;
+import com.parse.LogOutCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseQuery;
@@ -35,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     private Button btnSubmit;
     private File photoFile;
     private String photoFileName = "photo.jpg";
+    private Button btnLogout;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +60,14 @@ public class MainActivity extends AppCompatActivity {
                 launchCamera();
             }
         });
+        btnLogout = findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "onClick Logout button");
+                logoutUser();
+            }
+        });
 
         //queryPost();
         btnSubmit.setOnClickListener(new View.OnClickListener() {
@@ -62,10 +78,32 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this,"Description cannot be empty", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                if (photoFile == null || ivPostImage.getDrawable() == null){
+                    Toast.makeText(MainActivity.this,"There is no image", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 ParseUser currentUser = ParseUser.getCurrentUser();
-                savePost(description,currentUser);
+                savePost(description,currentUser,photoFile);
             }
         });
+    }
+
+    private void logoutUser() {
+        ParseUser.logOut();
+        ParseUser currentUser = ParseUser.getCurrentUser(); // this will now be null
+        Log.i(TAG, "Attempting to login user");
+        ParseUser.logOutInBackground(new LogOutCallback() {
+            @Override
+            public void done(ParseException e) {
+                goLoginActivity();
+                Toast.makeText(MainActivity.this, "Logout Success", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void goLoginActivity() {
+        Intent i = new Intent(this, LoginActivity.class);
+        startActivity(i);
     }
 
     public void launchCamera() {
@@ -88,6 +126,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                // by this point we have the camera photo on disk
+                Bitmap takenImage = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+                // RESIZE BITMAP, see section below
+                // Load the taken image into a preview
+                ivPostImage.setImageBitmap(takenImage);
+            } else { // Result was a failure
+                Toast.makeText(this, "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private File getPhotoFileUri(String photoFileName) {
         // Get safe storage directory for photos
         // Use `getExternalFilesDir` on Context to access package-specific directories.
@@ -105,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
         return file;
     }
 
-    private void savePost(String description, ParseUser currentUser) {
+    private void savePost(String description, ParseUser currentUser, File photoFile) {
         Post post = new Post();
         post.setDescription(description);
-        //post.setImage(parseFile);
+        post.setImage(new ParseFile(photoFile));
         post.setUser(currentUser);
         post.saveInBackground(new SaveCallback() {
             @Override
@@ -119,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Log.i(TAG,"Post saved successfully!");
                 etDescription.setText("");
+                ivPostImage.setImageResource(0);
             }
         });
 
